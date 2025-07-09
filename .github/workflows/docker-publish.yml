@@ -1,19 +1,22 @@
 name: Mirror LangFlow to GHCR
 
+# Puedes lanzarlo manualmente o con cron diario
 on:
   workflow_dispatch:
   schedule:
-    - cron: '0 2 * * *'
+    - cron: '0 2 * * *'  # cada día a las 02:00 UTC
 
 permissions:
-  contents: read
-  packages: write
+  contents: read   # para checkout
+  packages: write  # para poder publicar en GHCR
 
 jobs:
   mirror:
     runs-on: ubuntu-latest
+
     steps:
-      - uses: actions/checkout@v3
+      - name: Checkout repo
+        uses: actions/checkout@v3
 
       - name: Log in to GHCR
         uses: docker/login-action@v2
@@ -23,14 +26,19 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Pull official LangFlow
-        run: docker pull langflowai/langflow:latest
+        run: |
+          docker pull langflowai/langflow:latest
 
-      - name: Tag & push to GHCR
+      - name: Tag image for GHCR
         run: |
           docker tag langflowai/langflow:latest \
-            ghcr.io/${{ toLower(github.repository_owner) }}/trueeye-flow-base:latest
+            ghcr.io/deepratai/trueeye-flow-base:latest
 
-          docker push ghcr.io/${{ toLower(github.repository_owner) }}/trueeye-flow-base:latest
+      - name: Push to GHCR
+        run: |
+          docker push ghcr.io/deepratai/trueeye-flow-base:latest
 
       - name: Verify it’s there
-        run: docker pull ghcr.io/${{ toLower(github.repository_owner) }}/trueeye-flow-base:latest
+        run: |
+          docker pull ghcr.io/deepratai/trueeye-flow-base:latest
+
